@@ -1,10 +1,20 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import "./App.css";
 
 type Player = { mention: string; name: string };
 type Ribbon = { qty: string; emoji: string; label: string };
 type XpEntry = { desc: string; xp: string; bonuses: { desc: string; xp: string }[] };
 type LootItem = { name: string; url: string };
+
+const RIBBON_GROUPS = [
+  { type: "Quest", names: ["Combat", "Social", "Deception", "Stealth", "Transport", "Research", "Duel", "Exploration"] },
+  { type: "Planar", names: ["Air", "Wood", "Water", "Metal", "Earth", "Fire", "Draconic", "Vitality", "Void", "Outsider"] },
+  { type: "Guild", names: ["Guild"] },
+  { type: "Event", names: ["Spring", "Summer", "Autumn", "Winter"] },
+];
+const RIBBON_CHOICES = RIBBON_GROUPS.flatMap((group) =>
+  group.names.map((name) => ({ name, emoji: `:ribbon_${name.toLowerCase()}:` }))
+);
 
 export default function App() {
   const [gameName, setGameName] = useState("Fight For Your Life!");
@@ -13,28 +23,15 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([
     { mention: "<@123456789>", name: "Valeros" },
   ]);
-  const [ribbons, setRibbons] = useState<Ribbon[]>([
-    { qty: "1", emoji: ":ribbon_combat:", label: "Combat" },
-  ]);
+  const [ribbons, setRibbons] = useState<Ribbon[]>([]);
   const [xpEntries, setXpEntries] = useState<XpEntry[]>([
-    { desc: "Encounter 1 enemies", xp: "80", bonuses: [{ desc: "side objective", xp: "30" }] },
+    { desc: "Encounter 1 enemies", xp: "80", bonuses: [] },
   ]);
-  const [loot, setLoot] = useState<LootItem[]>([
-    { name: "Item 1", url: "https://example.com/item1" },
-  ]);
-  const [includeReminder, setIncludeReminder] = useState(true);
-  const [favorLevel, setFavorLevel] = useState("Minor favor");
-  const [favorFaction, setFavorFaction] = useState("Pathfinder Society");
-  const [lootStatement, setLootStatement] = useState(
-    "One selection and 10 GP each"
-  );
-
-  const [openSections, setOpenSections] = useState({
-    eventSummary: eventSummary.trim().length > 0,
-    favor: Boolean(favorLevel || favorFaction),
-    ribbons: ribbons.length > 0,
-    loot: loot.length > 0,
-  });
+  const [loot, setLoot] = useState<LootItem[]>([]);
+  const [includeReminder, setIncludeReminder] = useState(false);
+  const [favorLevel, setFavorLevel] = useState("");
+  const [favorFaction, setFavorFaction] = useState("");
+  const [lootStatement, setLootStatement] = useState("");
 
   const addPlayer = () =>
     setPlayers((p) => [...p, { mention: "", name: "" }]);
@@ -56,6 +53,16 @@ export default function App() {
     setRibbons((r) =>
       r.map((rb, idx) => (idx === i ? { ...rb, [field]: value } : rb))
     );
+  const selectRibbon = (i: number, emoji: string) => {
+    const selected = RIBBON_CHOICES.find((choice) => choice.emoji === emoji);
+    setRibbons((r) =>
+      r.map((rb, idx) =>
+        idx === i
+          ? { ...rb, emoji, label: selected?.name === "Guild" ? "" : selected?.name ?? "" }
+          : rb
+      )
+    );
+  };
 
   const addXp = () =>
     setXpEntries((x) => [
@@ -123,57 +130,47 @@ export default function App() {
       .map((p) => `${normalize(p.mention) || ""} as *${normalize(p.name)}*`)
       .join("\n");
 
-    const lines: string[] = [];
-    lines.push(`# **${normalize(gameName)}**`);
-    if (playersBlock) lines.push(playersBlock);
+    const intro = [`# **${normalize(gameName) || "Game Summary"}**`];
+    if (playersBlock) intro.push(playersBlock);
     if (includeReminder) {
-      lines.push("**Reset your queue position if you haven't yet!**");
+      intro.push("**Reset your queue position if you haven't yet!**");
     }
-    lines.push("");
-
-    if (eventSummary.trim()) lines.push(eventSummary);
-    lines.push("");
+    const sections = [intro.join("\n")];
+    if (eventSummary.trim()) sections.push(eventSummary.trim());
 
     if (favorLevel || favorFaction) {
-      lines.push(
-        `🎭 **${normalize(favorLevel)}** 🎭 for ${normalize(favorFaction)}`
-      );
-      lines.push("");
+      const favor = normalize(favorLevel) || "Favor";
+      const faction = normalize(favorFaction);
+      sections.push(`🎭 **${favor}** 🎭${faction ? ` for ${faction}` : ""}`);
     }
 
     if (ribbons.length) {
       const ribbonLines = ribbons
         .filter((r) => normalize(r.emoji) && normalize(r.label))
-        .map((r) => `${normalize(r.qty)} ${r.emoji} ${normalize(r.label)}`)
+        .map((r) => `${normalize(r.qty) || "1"} ${normalize(r.emoji)} ${normalize(r.label)}`);
       if (ribbonLines.length) {
-        lines.push("🎀 **Ribbons** 🎀");
-        lines.push(ribbonLines.join("\n"));
-        lines.push("");
+        sections.push(`🎀 **Ribbons** 🎀\n${ribbonLines.join("\n")}`);
       }
     }
 
-    if (xpEntries.length) {
-      lines.push("⭐ **XP** ⭐");
-      lines.push("");
-      lines.push("```diff");
-      lines.push(buildXpDiff());
-      lines.push("```");
-      lines.push("");
+    if (xpEntries.some((entry) => normalize(entry.desc) && Number(entry.xp) > 0)) {
+      sections.push("⭐ **XP** ⭐\n\n```diff\n" + buildXpDiff() + "\n```");
     }
 
     if (loot.length) {
       const lootLines = loot
         .filter((it) => normalize(it.name) && normalize(it.url))
-        .map((it) => `- [${normalize(it.name)}](<${normalize(it.url)}>)`)
+        .map((it) => `- [${normalize(it.name)}](<${normalize(it.url)}>)`);
       if (lootLines.length) {
-        lines.push("💰 **Loot** 💰");
-        if (lootStatement) lines.push(normalize(lootStatement));
-        lines.push(lootLines.join("\n"));
-        lines.push("");
+        sections.push(
+          ["💰 **Loot** 💰", normalize(lootStatement), lootLines.join("\n")]
+            .filter(Boolean)
+            .join("\n")
+        );
       }
     }
 
-    return lines.join("\n");
+    return sections.join("\n\n");
   }, [
     gameName,
     players,
@@ -214,27 +211,35 @@ export default function App() {
     return `${parts.join("\n\n")}\n\n(total ${total} XP)`;
   }
 
-  const discordOutput = useMemo(() => buildDiscord(), [buildDiscord]);
+  const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const copyOutput = async () => {
+  const [copyMessage, setCopyMessage] = useState("");
+  const copyOutput = async (text: string) => {
+    let success = false;
     try {
-      await navigator.clipboard.writeText(discordOutput);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(text);
+      success = true;
+    } catch {
       const ta = document.createElement("textarea");
-      ta.value = discordOutput;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       try {
-        document.execCommand("copy");
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      } catch (e) {
-        console.error("Copy failed", e);
-      }
-      document.body.removeChild(ta);
+        success = document.execCommand("copy");
+      } catch { /* The output remains available for manual copying. */ }
+      ta.remove();
     }
+    setCopied(success);
+    setCopyMessage(success ? "Summary copied to clipboard." : "Automatic copy failed. Use Copy summary.");
+    if (success) setTimeout(() => setCopied(false), 2000);
+  };
+  const handleGenerate = () => {
+    const summary = buildDiscord();
+    setGeneratedOutput(summary);
+    setCopied(false);
+    setCopyMessage("");
+    void copyOutput(summary);
   };
 
   return (
@@ -244,8 +249,15 @@ export default function App() {
           <h1>Game Summary</h1>
         </div>
 
-        <section className="form-card">
-          <div className="section-title">Game</div>
+        <form
+          className="form-card"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleGenerate();
+          }}
+        >
+        <fieldset className="form-section">
+          <legend>Game Information</legend>
           <label htmlFor="gameName">Game Name</label>
           <input
             id="gameName"
@@ -254,33 +266,15 @@ export default function App() {
             onChange={(e) => setGameName(e.target.value)}
             placeholder="Fight For Your Life!"
           />
-          <button
-            type="button"
-            className="disclosure-toggle"
-            onClick={() =>
-              setOpenSections((s) => ({ ...s, eventSummary: !s.eventSummary }))
-            }
-          >
-            {openSections.eventSummary
-              ? "Hide"
-              : "Show"}
-            {" "}event summary &amp; achievements
-          </button>
-          {openSections.eventSummary && (
-            <>
-              <label htmlFor="eventSummary">Event summary &amp; achievements</label>
-              <textarea
-                id="eventSummary"
-                value={eventSummary}
-                onChange={(e) => setEventSummary(e.target.value)}
-                placeholder="Notable moments and achievements..."
-              />
-            </>
-          )}
-        </section>
-
-        <section className="form-card">
-          <div className="section-title">Players</div>
+          <label htmlFor="eventSummary">Event summary &amp; achievements</label>
+          <textarea
+            id="eventSummary"
+            value={eventSummary}
+            onChange={(e) => setEventSummary(e.target.value)}
+            placeholder="Notable moments and achievements..."
+            required
+          />
+          <h2 className="subsection-title">Players</h2>
           {players.map((p, i) => (
             <div className="dynamic-row" key={i}>
               <div className="field-heading">Player {i + 1}</div>
@@ -320,10 +314,9 @@ export default function App() {
           <button type="button" className="add-row-btn" onClick={addPlayer}>
             + Add player
           </button>
-        </section>
-
-        <section className="form-card">
-          <div className="section-title">Queue</div>
+          <details className="disclosure">
+            <summary>Queue reminder (optional)</summary>
+            <div className="disclosure-content">
           <div className="checkbox-row">
             <input
               id="reminder"
@@ -335,15 +328,15 @@ export default function App() {
               Include “Reset your queue position if you haven&apos;t yet!”
             </label>
           </div>
-        </section>
+            </div>
+          </details>
+        </fieldset>
 
-        <section className="form-card">
-          <details className="disclosure" open={openSections.favor} onToggle={(e) => {
-            const isOpen = e.currentTarget.open
-            setOpenSections((s) => ({ ...s, favor: isOpen }))
-          }}>
-            <summary>Favor details (optional)</summary>
-            <div>
+        <fieldset className="form-section rewards-section">
+          <legend>Rewards</legend>
+          <details className="reward-disclosure">
+            <summary>Favor (optional)</summary>
+            <div className="disclosure-content">
               <label htmlFor="favorLevel">Favor level / type</label>
               <input
                 id="favorLevel"
@@ -362,19 +355,13 @@ export default function App() {
               />
             </div>
           </details>
-        </section>
+          <section className="reward-group">
+            <h2>Ribbons</h2>
 
-        <section className="form-card">
-          <details className="disclosure" open={openSections.ribbons} onToggle={(e) => {
-            const isOpen = e.currentTarget.open
-            setOpenSections((s) => ({ ...s, ribbons: isOpen }))
-          }}>
-            <summary>Ribbons (optional)</summary>
-            <div>
               {ribbons.map((r, i) => (
-            <div className="dynamic-row" key={i}>
+            <div className="dynamic-row reward-entry" key={i}>
               <div className="field-heading">Ribbon {i + 1}</div>
-              <div className="row-inline-3">
+              <div className="ribbon-fields">
                 <div>
                   <label htmlFor={`rb-q-${i}`}>Quantity</label>
                   <input
@@ -388,19 +375,27 @@ export default function App() {
                   />
                 </div>
                 <div>
-                  <label htmlFor={`rb-e-${i}`}>Emoji</label>
-                  <input
+                  <label htmlFor={`rb-e-${i}`}>Ribbon</label>
+                  <select
                     id={`rb-e-${i}`}
-                    type="text"
                     value={r.emoji}
-                    onChange={(e) =>
-                      updateRibbon(i, "emoji", e.target.value)
-                    }
-                    placeholder=":ribbon_combat:"
-                  />
+                    onChange={(e) => selectRibbon(i, e.target.value)}
+                    required
+                  >
+                    <option value="">Choose ribbon</option>
+                    {RIBBON_GROUPS.map((group) => (
+                      <optgroup key={group.type} label={group.type}>
+                        {group.names.map((name) => (
+                          <option key={name} value={`:ribbon_${name.toLowerCase()}:`}>
+                            {name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label htmlFor={`rb-l-${i}`}>Label</label>
+                  <label htmlFor={`rb-l-${i}`}>{r.emoji === ":ribbon_guild:" ? "Guild name" : "Ribbon name"}</label>
                   <input
                     id={`rb-l-${i}`}
                     type="text"
@@ -408,7 +403,8 @@ export default function App() {
                     onChange={(e) =>
                       updateRibbon(i, "label", e.target.value)
                     }
-                    placeholder="Combat"
+                    placeholder={r.emoji === ":ribbon_guild:" ? "e.g. Artisan" : "Name in summary"}
+                    required
                   />
                 </div>
               </div>
@@ -426,14 +422,12 @@ export default function App() {
           <button type="button" className="add-row-btn" onClick={addRibbon}>
             + Add ribbon
           </button>
-          </div>
-          </details>
-        </section>
+          </section>
 
-        <section className="form-card">
-          <div className="section-title">XP</div>
+          <section className="reward-group">
+          <h2>XP</h2>
           {xpEntries.map((e, i) => (
-            <div className="dynamic-row" key={i}>
+            <div className="dynamic-row reward-entry" key={i}>
               <div className="field-heading">XP entry {i + 1}</div>
               <div className="row-inline-2">
                 <div>
@@ -457,11 +451,7 @@ export default function App() {
                   />
                 </div>
               </div>
-              <div>
-                <label>
-                  Bonus / secondary lines
-                  <span className="inline-note"> (one or more)</span>
-                </label>
+              <div className="bonus-group">
                 {e.bonuses.length > 0 && e.bonuses.map((b, bi) => (
                   <div className="dynamic-row" key={bi}>
                     <div className="row-inline">
@@ -519,14 +509,10 @@ export default function App() {
           <button type="button" className="add-row-btn" onClick={addXp}>
             + Add XP entry
           </button>
-        </section>
+          </section>
 
-        <section className="form-card">
-          <details className="disclosure" open={openSections.loot} onToggle={(e) => {
-            const isOpen = e.currentTarget.open
-            setOpenSections((s) => ({ ...s, loot: isOpen }))
-          }}>
-            <summary>Loot (optional)</summary>
+          <section className="reward-group">
+          <h2>Loot</h2>
           <label htmlFor="lootStatement">Loot statement</label>
           <input
             id="lootStatement"
@@ -536,7 +522,7 @@ export default function App() {
             placeholder="One selection and 10 GP each"
           />
           {loot.map((it, i) => (
-            <div className="dynamic-row" key={i}>
+            <div className="dynamic-row reward-entry" key={i}>
               <div className="field-heading">Loot item {i + 1}</div>
               <div className="row-inline">
                 <div>
@@ -574,28 +560,26 @@ export default function App() {
           <button type="button" className="add-row-btn" onClick={addLoot}>
             + Add loot item
           </button>
-          </details>
-        </section>
+          </section>
+        </fieldset>
 
-        <section className="output-section">
+          <button type="submit" className="generate-btn">Generate Summary</button>
+        </form>
+
+        {generatedOutput !== null && <section className="output-section">
           <div className="copy-bar">
-            <span className="output-label">Discord output</span>
+            <span className="output-label">Discord summary</span>
             <button
               type="button"
               className={`copy-btn${copied ? " copied" : ""}`}
-              onClick={copyOutput}
+              onClick={() => void copyOutput(generatedOutput)}
             >
-              {copied ? "Copied!" : "Copy to Clipboard"}
+              {copied ? "Copied!" : "Copy summary"}
             </button>
           </div>
-          <textarea
-            className="output-box"
-            readOnly
-            value={discordOutput}
-            aria-label="Discord output"
-          />
-
-        </section>
+          {copyMessage && <p className="copy-notice" role="status">{copyMessage}</p>}
+          <pre className="output-pre" aria-label="Discord summary">{generatedOutput}</pre>
+        </section>}
       </div>
     </div>
   );

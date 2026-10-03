@@ -406,3 +406,130 @@ h1 {
   border-color: var(--accent, #4a57f0);
   color: #fff;
 }
+
+/* Match the compact layout and controls used by PF2e Crafting. */
+body { background: #222; color: #eee; font-family: sans-serif; padding: 0 .5rem 2rem; }
+.inner-container { max-width: 500px; }
+.app-header { padding: 1rem 0 .5rem; }
+.app-header h1 { margin: 0; font-size: 2rem; letter-spacing: normal; }
+.form-card {
+  background: #262626; padding: 1.25rem; border-radius: 1rem;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .15); gap: .5rem;
+  margin-bottom: .5rem; min-width: 0;
+}
+.form-section {
+  display: grid; gap: 4px; min-width: 0; margin: 0; padding: .3rem .6rem .6rem;
+  border: 1px solid #555; border-radius: .85rem; background: transparent;
+}
+.form-section + .form-section { margin-top: .45rem; }
+.rewards-section { gap: .5rem; }
+.form-section legend {
+  padding: 0 .35rem; font-size: .9rem; color: #ccc;
+  font-weight: normal; text-transform: none; letter-spacing: normal;
+}
+.subsection-title { margin: .55rem 0 .15rem; font-size: .9rem; font-weight: 600; color: #ccc; }
+.bonus-group { display: grid; gap: .4rem; min-width: 0; }
+.section-title { padding: 0 .35rem; font-size: .9rem; color: #ccc; letter-spacing: normal; text-transform: none; }
+.form-card label { margin-bottom: .2rem; color: #eee; }
+.form-card input[type="text"], .form-card input[type="number"], .form-card select, .form-card textarea {
+  padding: .5rem; border: 1px solid #444; background: #181818; color: #eee;
+  font: inherit;
+}
+.form-card input[type="text"], .form-card input[type="number"], .form-card select { height: 38px; }
+.form-card textarea { min-height: 60px; }
+.dynamic-row {
+  display: grid; gap: .4rem; min-width: 0; padding: .6rem;
+  border: 1px solid #555; border-radius: .85rem; background: transparent;
+}
+.dynamic-row + .dynamic-row { margin-top: .45rem; }
+.field-heading { color: #ccc; font-size: .9rem; }
+.row-inline, .row-inline-2, .row-inline-3 { gap: .5rem; min-width: 0; }
+.row-inline, .row-inline-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.row-inline-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ribbon-fields {
+  display: grid; grid-template-columns: 4.5rem minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: .5rem; min-width: 0;
+}
+.ribbon-fields > div { min-width: 0; }
+.row-inline > div, .row-inline-2 > div, .row-inline-3 > div { min-width: 0; }
+.row-actions { justify-content: flex-end; }
+.form-card button {
+  background: #333; color: #eee; border: 1px solid #666; border-radius: .4rem;
+  min-height: 26px; padding: 2px 6px; font: inherit; font-size: .8rem;
+  line-height: 1.2; cursor: pointer;
+}
+.form-card button:hover { border-color: #9dc6ef; color: #eee; }
+.form-card .generate-btn {
+  width: 100%; margin-top: .5rem; padding: 1rem;
+  border: 0; border-radius: .5rem; background: #111; color: #fff;
+  font-size: 1.1rem; font-weight: bold;
+}
+.form-card .add-row-btn {
+  width: 100%; align-self: stretch; justify-self: stretch; margin-top: .3rem;
+  text-align: center;
+}
+.form-card .remove-row-btn { color: #f0b4b8; }
+.checkbox-row label { margin: 0; }
+.checkbox-row input[type="checkbox"] { width: 1em; height: 1em; margin: 0; }
+.disclosure { border: 0; border-radius: 0; margin: 0; overflow: visible; min-width: 0; }
+.disclosure > summary {
+  padding: 0 .35rem; background: transparent; color: #ccc;
+  font-size: .9rem; list-style-position: inside;
+}
+.disclosure > summary::before, .disclosure[open] > summary::before { content: none; }
+.disclosure > summary:hover { color: #fff; }
+.disclosure > .disclosure-content {
+  display: grid; gap: .45rem; padding: .65rem 0 0; border: 0; min-width: 0;
+}
+.disclosure-content > .add-row-btn { margin-top: 0; }
+.reward-group {
+  display: grid; gap: .4rem; min-width: 0; margin: 0;
+}
+.reward-group + .reward-group, .reward-disclosure + .reward-group {
+  border-top: 1px solid #555; padding-top: .55rem;
+}
+.reward-group h2, .reward-disclosure > summary {
+  margin: 0; color: #ccc; font-size: .9rem; font-weight: 600; line-height: 1.25;
+}
+.reward-entry {
+  border-color: #444; border-radius: .65rem; background: #202020;
+}
+.reward-disclosure { display: block; padding-bottom: .15rem; }
+.reward-disclosure > summary {
+  display: flex; align-items: center; gap: .4rem; cursor: pointer; list-style: none;
+}
+.reward-disclosure > summary::-webkit-details-marker { display: none; }
+.reward-disclosure > summary::before { content: "▸"; width: .6rem; }
+.reward-disclosure[open] > summary::before { content: "▾"; }
+.reward-disclosure > summary:hover { color: #fff; }
+.reward-disclosure > .disclosure-content {
+  display: grid; gap: .45rem; padding-top: .5rem;
+}
+.output-section { margin-top: 1rem; min-width: 0; }
+.output-label { color: #eee; font-weight: 600; }
+.copy-btn {
+  background: #333; color: #eee; border: 1px solid #666; border-radius: .4rem;
+  min-height: 26px; padding: 2px 6px; font: inherit; font-size: .8rem; line-height: 1.2;
+}
+.copy-btn:hover, .copy-btn.copied { border-color: #9dc6ef; background: #384b5e; }
+.output-pre {
+  white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto;
+  margin: .4rem 0 0; padding: 1rem; border: 1px solid #444;
+  border-radius: .7rem; background: #181818; color: #eee;
+  font: 1rem/1.5 monospace;
+}
+.copy-notice { margin: .4rem 0 0; color: #ccc; font-size: .85rem; }
+.form-card input:focus-visible, .form-card select:focus-visible, .form-card textarea:focus-visible,
+.form-card button:focus-visible, .disclosure summary:focus-visible,
+.copy-btn:focus-visible { outline: 2px solid #8dc8ff; outline-offset: 2px; }
+@media (max-width: 480px) {
+  .inner-container { padding: 0; }
+  .form-card { padding: 1rem; }
+  .row-inline-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ribbon-fields { grid-template-columns: 4.5rem minmax(0, 1fr); }
+  .ribbon-fields > div:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .row-inline, .row-inline-2, .row-inline-3 { grid-template-columns: 1fr; }
+  .copy-bar { flex-wrap: wrap; }
+}

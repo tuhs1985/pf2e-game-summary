@@ -1,6 +1,6 @@
 # PF2e Game Summary
 
-A local, client-side PWA for composing a Discord game summary. The form supports any number of players, ribbons, XP entries with optional bonuses, and loot links. The output field contains raw Discord Markdown for copying.
+A client-side app for composing a Discord game summary. The form supports players, ribbons, XP entries with bonuses, and loot links. Generate Summary displays the Discord Markdown and attempts to copy it.
 
 ## Run locally
 
@@ -18,8 +18,18 @@ npm run build
 npm run preview
 ```
 
-The `dist/` folder is a known-good build copied from the guided bake-off. Rebuild it after source changes. The PWA works offline after its first successful load in a supported browser.
+The PWA works offline after its first successful load in a supported browser.
 
-## Origin
+## Share one file
 
-Promoted from `C:\Project\Bakeoff_Ornith\GameSummaryApp_GuidedA` on 2026-10-03. The original bake-off candidate and evaluation transcripts remain in place. This project contains the app files, without the bake-off appearance reference or dependency cache.
+After `npm ci`, run:
+
+```powershell
+npm run build:single
+```
+
+Download `Game-Summary.html` from the [latest GitHub release](https://github.com/tuhs1985/pf2e-game-summary/releases/latest), or share your local `dist-single/Game-Summary.html`. The recipient downloads that one file and double-clicks it to open in a browser. It runs offline and does not require Node or an installer on their computer. This build does not include the PWA install and update features. The normal `npm run build` command still produces the PWA in `dist/`.
+
+## Future hosting
+
+The source is available in this repository if GitHub Pages hosting is desired later. Pages is not enabled; the downloadable release works without hosting.
